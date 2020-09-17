@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Scene 1.unity
     guid: 8dec4b6cb2a17f6469e41b225e07fb56
+  - enabled: 0
+    path: Assets/Scenes/CameraTEst.unity
+    guid: e70c3e5ade5552e47aba66480f11f50f
   m_configObjects: {}
