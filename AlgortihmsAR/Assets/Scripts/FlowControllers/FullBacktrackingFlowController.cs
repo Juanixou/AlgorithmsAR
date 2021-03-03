@@ -27,6 +27,7 @@ public class FullBacktrackingFlowController : MonoBehaviour
 
     private bool automatic = true;
     private bool stopAlgortihm = true;
+    private int curOrder = 0;
 
     //Variables to preStep
     private bool isBack = false;
@@ -37,10 +38,16 @@ public class FullBacktrackingFlowController : MonoBehaviour
     //CONSTS
     const string SECTION = "sprt_step_";
 
+    //New Section for new way to read the trace
+    int curStepData = 0;
+    private DataByStep[] dataByStepList;
+
+
     void Start()
     {
         algthm = GetComponent<FullBacktracking>();
         vslMazeCtrll = GetComponent<VisualMazeController>();
+        vslTrazeCtrll = GetComponent<VisualTrazeVariables>();
         controlDataList = new List<ControlData>();
         controlPhasesList = new List<ControlPhases>();
         if (sectionImages.Length == 0)
@@ -73,17 +80,56 @@ public class FullBacktrackingFlowController : MonoBehaviour
         if (!paused)
         {
             paused = true;
-            sectionImages[curStep].SetActive(true);
-            DisableImages(curStep);
-            ManageSteps();
+            sectionImages[dataByStepList[curStepData].step].SetActive(true);
+            DisableImages(dataByStepList[curStepData].step);
+            //ManageSteps();
+            ManageTrace();
         }
     }
 
     public void SolveMaze()
     {
-        stateDataList = algthm.StartAlgorithm();
-
+        //stateDataList = algthm.StartAlgorithm();
+        dataByStepList = algthm.StartAlgorithm();
     }
+
+    public void ManageTrace()
+    {
+        switch (dataByStepList[curStepData].step)
+        {
+            case 0:
+                Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.yellow);
+                if(dataByStepList[curStepData].order != -1) vslTrazeCtrll.SetMovementDirectionValue(dataByStepList[curStepData].order);
+                if(dataByStepList[curStepData].k != -1) vslTrazeCtrll.SetIterationLevel(dataByStepList[curStepData].k);
+                //SetVariablesByStep
+
+                break;
+            case 1:
+                Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.cyan);
+                if (dataByStepList[curStepData].order != -1) vslTrazeCtrll.SetMovementDirectionValue(dataByStepList[curStepData].order);
+                vslTrazeCtrll.SetCurrentMazePosition(dataByStepList[curStepData].x, dataByStepList[curStepData].y);
+                break;
+            case 2:
+                if (dataByStepList[curStepData].isFinished)
+                {
+                    Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.green);
+                }
+                
+                break;
+            case 3:
+                break;
+            case 4:
+                if (!dataByStepList[curStepData].isValid)
+                {
+                    Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.red);
+                }
+                vslTrazeCtrll.SetCurrentMazePosition(dataByStepList[curStepData].x, dataByStepList[curStepData].y);
+                break;
+            default:
+                break;
+        }
+    }
+
 
     //Generic function used to control the flow step by step
     public void ManageSteps()
@@ -91,10 +137,11 @@ public class FullBacktrackingFlowController : MonoBehaviour
         switch (curStep)
         {
             case 0:
-
+                curOrder = -1;
                 //SetVariablesByStep(0);
                 break;
             case 1:
+                //Row and Column INC
                 Paint(stateDataList[k].x, stateDataList[k].y, Color.yellow);
 
                 if (!isBack)
@@ -102,6 +149,7 @@ public class FullBacktrackingFlowController : MonoBehaviour
                     controlDataList.Add(new ControlData(curStep, k));
                     controlPhasesList.Add(new ControlPhases(k, curStep));
                     curSubStep++;
+                    curOrder++;
                     preIteration = k;
                 }
                 else
@@ -112,6 +160,7 @@ public class FullBacktrackingFlowController : MonoBehaviour
                 }
                 break;
             case 2:
+                //If is valid position, check if is the end
                 Paint(stateDataList[k].x, stateDataList[k].y, Color.cyan);
                 if (stateDataList[k].isEnd)
                 {
@@ -120,11 +169,11 @@ public class FullBacktrackingFlowController : MonoBehaviour
                 }
                 break;
             case 3:
-                
+                //Recursive call. Check if we finish the maze
                 
                 break;
             case 4:
-
+                //If the movement it's not posible, we go back to the original position.
                 if (!isBack)
                 {
                     controlPhasesList.Add(new ControlPhases(k, curStep));
@@ -154,16 +203,10 @@ public class FullBacktrackingFlowController : MonoBehaviour
     //Function used to continue with execution
     public void NextStep()
     {
-        if (curStep == steps - 1)
-        {
-            if (k == stateDataList.Length - 1) return;
-            curStep = 0;
-            k++;
-        }
-        else
-        {
-            curStep++;
-        }
+
+        if (curStepData == dataByStepList.Length) return;
+
+        curStepData++;
         isBack = false;
         paused = false;
     }
@@ -208,7 +251,7 @@ public class FullBacktrackingFlowController : MonoBehaviour
     //Generic function to paint visual maze
     public void Paint(int x, int y, Color color)
     {
-        if (stateDataList[k].isWall) return;
+        if (dataByStepList[curStepData].isWall) return;
         vslMazeCtrll.SetColor(x, y, color);
     }
 
@@ -218,7 +261,7 @@ public class FullBacktrackingFlowController : MonoBehaviour
         switch (curStep)
         {
             case 0:
-                vslTrazeCtrll.SetMovementDirectionValue(order);
+                
                 vslTrazeCtrll.SetFinishValue(false);
                 break;
             case 1:
@@ -229,6 +272,20 @@ public class FullBacktrackingFlowController : MonoBehaviour
                 break;
         }
     }
+
+    public bool CheckNextMovement()
+    {
+        if (stateDataList[k].postPos[curOrder].x == stateDataList[k+1].x && stateDataList[k].postPos[curOrder].y == stateDataList[k + 1].y)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
 
     //Coroutine used to controll the steps speed
     IEnumerator WaitSeconds()

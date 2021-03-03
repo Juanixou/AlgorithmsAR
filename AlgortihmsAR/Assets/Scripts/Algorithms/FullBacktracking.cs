@@ -12,15 +12,18 @@ public class FullBacktracking : MonoBehaviour
     private int phase = -1;
     private VisualMazeController visualMazeController;
 
+    //TO-DO
+    private List<DataByStep> dataByStepList;
+
     // Start is called before the first frame update
     void Start()
     {
-        FullStateData[] ar = StartAlgorithm();
+        //FullStateData[] ar = StartAlgorithm();
     }
 
     // Update is called once per frame
     
-    public FullStateData[] StartAlgorithm()
+    public DataByStep[] StartAlgorithm()
     {
         mov_col = new int[4];
         mov_fil = new int[4];
@@ -40,6 +43,7 @@ public class FullBacktracking : MonoBehaviour
         N = maze.GetLength(1);
         lab = new int[N, N];
         stateDataList = new List<FullStateData>();
+        dataByStepList = new List<DataByStep>();
         Laberinto(1, 0, 0, phase);
 
         visualMazeController = this.GetComponent<VisualMazeController>();
@@ -58,9 +62,11 @@ public class FullBacktracking : MonoBehaviour
         }
         Debug.Log(solution);
 
-        Debug.Log("TAMAÑO LISTA: " + stateDataList.Count);
+        Debug.Log("TAMAÑO LISTA: " + dataByStepList.Count);
 
-        return stateDataList.ToArray();
+        
+
+        return dataByStepList.ToArray();
     }
 
     public void Laberinto(int k, int fil, int col, int prePhase)
@@ -69,17 +75,26 @@ public class FullBacktracking : MonoBehaviour
         //Save the current state data necessary for simulation
         stateDataList.Add(new FullStateData(fil, col, phase, prePhase));
         
+        
         int orden = -1;
+        dataByStepList.Add(new DataByStep(0, fil, col, orden, k));
         //Start the loop to check four directions
         do
         {
             //We try to move in one way
             orden++;
+
+            dataByStepList.Add(new DataByStep(1, fil, col, orden, k));
+
             fil += mov_fil[orden];
             col += mov_col[orden];
             stateDataList[phase].postPos[orden] = new FullStateData.OrderPosition();
             stateDataList[phase].postPos[orden].SetXY(fil, col);
             stateDataList[phase].numIterations++;
+
+            dataByStepList[dataByStepList.Count - 1].postX = fil;
+            dataByStepList[dataByStepList.Count - 1].postY = col;
+
             //Check if is a possible position
             if ((fil >= 0) && (fil < N) && (col >= 0) && (col < N))
             {
@@ -92,12 +107,19 @@ public class FullBacktracking : MonoBehaviour
                     {
                         exito = true;
                         stateDataList[phase].isEnd = true;
+
+                        dataByStepList.Add(new DataByStep(2, fil, col, orden, k));
+                        dataByStepList[dataByStepList.Count - 1].isFinished = true;
+
                     }
                     else
                     {
                         stateDataList[phase].isValid = true;
                         //stateDataList[phase].SetGeneralId(orden, phase+1);
                         stateDataList[phase].isWall = false;
+
+                        dataByStepList.Add(new DataByStep(3, fil, col, orden, k));
+
                         Laberinto(k + 1, fil, col, phase);
                         if (!exito)
                         {
@@ -105,6 +127,9 @@ public class FullBacktracking : MonoBehaviour
                             stateDataList[phase].isValid = false;
                         }
                     }
+                }else if((maze[fil, col] == 0))
+                {
+                    dataByStepList[dataByStepList.Count - 1].isWall = true;
                 }
 
             }
@@ -112,13 +137,18 @@ public class FullBacktracking : MonoBehaviour
             {
                 stateDataList[phase].isWall = true;
                 stateDataList[phase].isValid = false;
+                dataByStepList[dataByStepList.Count - 1].isWall = true;
             }
             //We go back to the previous position
             fil -= mov_fil[orden];
             col -= mov_col[orden];
-            if(!exito || orden == 3)
+
+            dataByStepList.Add(new DataByStep(4, fil, col, orden, k));
+
+            if (!exito && orden == 3)
             {
                 stateDataList[phase].isValid = false;
+                dataByStepList[dataByStepList.Count - 1].isValid = false;
             }
 
         } while (!exito && orden < 3);

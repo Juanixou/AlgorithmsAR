@@ -14,6 +14,8 @@ public class VisualMazeController : MonoBehaviour
 
     private GameObject btn_play;
     private GameObject btn_pause;
+    public Vector3 labPosition;
+    public Vector3 labScale;
 
     public void InitializeData(int[,] maze, int n)
     {
@@ -85,9 +87,9 @@ public class VisualMazeController : MonoBehaviour
                 cubesPositions[i, j] = cube;
             }
             imagePosition.Set(xPosition, imagePosition.y, imagePosition.z - zScale);
-
         }
-
+        labObject.transform.position = labPosition;
+        labObject.transform.localScale = labScale;
 
     }
 
