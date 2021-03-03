@@ -95,12 +95,14 @@ public class FullBacktrackingFlowController : MonoBehaviour
 
     public void ManageTrace()
     {
+        if (isBack) Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.grey);
         switch (dataByStepList[curStepData].step)
         {
             case 0:
                 Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.yellow);
                 if(dataByStepList[curStepData].order != -1) vslTrazeCtrll.SetMovementDirectionValue(dataByStepList[curStepData].order);
                 if(dataByStepList[curStepData].k != -1) vslTrazeCtrll.SetIterationLevel(dataByStepList[curStepData].k);
+                if (isBack) Paint(dataByStepList[curStepData].x, dataByStepList[curStepData].y, Color.grey);
                 //SetVariablesByStep
 
                 break;
@@ -224,6 +226,13 @@ public class FullBacktrackingFlowController : MonoBehaviour
             paused = false;
 
         }
+
+        if (curStepData == 0) return;
+
+        curStepData--;
+        isBack = true;
+        paused = false;
+
     }
 
     public void JumpToIteration()
